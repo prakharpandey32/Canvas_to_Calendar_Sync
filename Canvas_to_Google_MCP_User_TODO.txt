@@ -1,0 +1,140 @@
+Canvas → Google Calendar MCP Server — User To-Do Guide
+==============================================================
+
+0) Prereqs
+- Python 3.11+ (3.13 OK)
+- Canvas account with course access
+- Google account (Gmail easiest)
+
+1) Get the code & install deps
+Windows (PowerShell):
+    cd C:\path\to\canvas-calendar-sync
+    python -m venv .venv
+    . .\.venv\Scripts\Activate.ps1
+    pip install -r requirements.txt
+
+macOS/Linux:
+    cd /path/to/canvas-calendar-sync
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt
+
+2) Create your Canvas .env (next to server.py)
+    CANVAS_BASE_URL=https://canvas.harvard.edu
+    CANVAS_API_TOKEN=PASTE_YOUR_CANVAS_TOKEN_HERE
+
+How to get Canvas token:
+1. Canvas → Profile / Settings
+2. + New Access Token (name it “MCP Server”)
+3. Copy the token (shows once)
+
+3) Set up Google Calendar API (one-time)
+In Google Cloud Console for the same project you’ll use:
+
+A. Enable API:
+   APIs & Services → Library → Google Calendar API → Enable
+
+B. Consent Screen (Google Auth Platform → Audience):
+   - User type: External
+   - Publishing status: Testing
+   - Test users: add the Gmail you’ll sign in with
+
+C. Scopes (Google Auth Platform → Data Access → Scopes):
+   Add ONE of:
+   - https://www.googleapis.com/auth/calendar.events   (recommended, least privilege)
+   - https://www.googleapis.com/auth/calendar          (broader)
+
+D. OAuth client (Desktop):
+   Google Auth Platform → Clients → Create OAuth client → Desktop app
+   Download JSON as credentials.json next to server.py
+
+4) First run → complete Google consent (creates token.json locally)
+    python server.py
+Sign in with the Test user you added → Allow access.
+If you change scopes later: delete token.json and run again to re-consent.
+
+5) Fetch your Canvas items
+MCP client (Cursor/Claude):
+   1. fetch_all_assignments
+   2. (optional per course) scan_syllabus
+   3. sync_to_google  (optionally pass {"calendar_id":"<your-id>"}; default "primary")
+
+Script version:
+    from server import list_all_assignments
+    items = list_all_assignments(include_syllabus=True)
+    print(len(items), "items")
+    for it in items[:5]:
+        print("-", it.get("course_name"), "|", it.get("name"), "|", it.get("due_date") or it.get("start_date"))
+
+6) Sync to Google (idempotent “upsert”)
+One-shot script:
+    from server import list_all_assignments, get_gcal_service, create_google_event
+    CAL_ID = "primary"  # or a secondary calendar ID
+    svc = get_gcal_service()
+    for it in list_all_assignments(include_syllabus=True):
+        create_google_event(svc, it, calendar_id=CAL_ID)
+    print("Done.")
+
+7) Pick a different calendar (optional)
+List calendar IDs:
+    from server import get_gcal_service
+    svc = get_gcal_service()
+    for c in svc.calendarList().list().execute().get("items", []):
+        print(c.get("summary"), "->", c.get("id"))
+
+8) Quick verification
+List events updated in the last 15 minutes:
+    from datetime import datetime, timedelta, timezone
+    from server import get_gcal_service
+    svc = get_gcal_service()
+    updated_min = (datetime.now(timezone.utc) - timedelta(minutes=15)).isoformat().replace("+00:00","Z")
+    resp = svc.events().list(calendarId="primary", singleEvents=True, orderBy="updated",
+                             updatedMin=updated_min, maxResults=250).execute()
+    items = resp.get("items", [])
+    print("RECENT EVENTS:", len(items))
+    for e in items[:20]:
+        print("-", e.get("summary"), "->", e.get("start",{}).get("dateTime") or e.get("start",{}).get("date"))
+
+9) Troubleshooting
+- 403 / access_denied (Google):
+  * Add your email under Test users
+  * Ensure scope is added
+  * Re-download credentials.json from the SAME project
+  * Delete token.json and run again (incognito can help)
+- 400 Invalid resource id value:
+  * Don’t send "id" in event body on insert (this server does not)
+- No Canvas items:
+  * Check .env, base URL, token validity, enrollment
+- IndentationError (Windows):
+  * Convert tabs → spaces:
+      (Get-Content .\server.py) -replace "`t","    " | Set-Content -Encoding UTF8 .\server.py
+      python -m py_compile .\server.py
+- Changing scopes later:
+  * Update scopes in Console, set GCAL_SCOPES to match, delete token.json, run again
+
+10) Git hygiene / Safety
+Never commit secrets:
+  - .env
+  - credentials.json
+  - token.json
+
+.gitignore should include:
+  .venv/
+  __pycache__/
+  *.pyc
+  .env
+  credentials.json
+  token.json
+  .DS_Store
+  Thumbs.db
+
+11) Uninstall / Reset
+- Revoke Canvas token (Canvas settings)
+- Delete token.json to clear Google local auth
+- Remove the project folder
+
+12) Smithery (MCP install pages)
+- Install: pip install -r requirements.txt
+- Start:   python server.py
+- Env vars: CANVAS_BASE_URL, CANVAS_API_TOKEN
+- Note: Users place credentials.json locally; first run opens Google consent.

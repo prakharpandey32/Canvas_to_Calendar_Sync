@@ -1,0 +1,13 @@
+﻿# virtualenv & caches
+.venv/
+__pycache__/
+*.pyc
+
+# local config & secrets
+.env
+credentials.json
+token.json
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
