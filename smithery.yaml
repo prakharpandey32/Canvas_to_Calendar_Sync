@@ -1,12 +1,12 @@
-name: canvas_to_calendar_sync
-version: 1
+runtime: python
 
-start:
+startCommand:
   command: python
-  args: ["server.py"]
+  args:
+    - server.py
   env:
-    MCP_TRANSPORT: "http"   # your server switches to HTTP mode
-    PORT: "8000"            # http server port
+    MCP_TRANSPORT: "http"
+    PORT: "8000"
 
 http:
   port: 8000
