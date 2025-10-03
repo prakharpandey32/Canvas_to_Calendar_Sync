@@ -717,47 +717,20 @@ async def read_resource(uri: str) -> str:
 # ============================================================================
 
 async def main():
-    """Run the server with appropriate transport"""
-    # Detect environment
-    mode = os.getenv("MCP_TRANSPORT", "stdio").lower()
+    """Run the server with stdio transport"""
+    from mcp.server.stdio import stdio_server
     
-    if mode == "sse":
-    # Smithery/Cloud deployment
-    from mcp.server.sse import SseServerTransport
-    from starlette.applications import Starlette
-    from starlette.routing import Route
-    import uvicorn
-    
-    port = int(os.getenv("PORT", "8000"))
-    print(f"Starting SSE server on port {port}...")
-    
-    sse = SseServerTransport("/messages")
-    
-    async def handle_sse(request):
-        async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
-            await server.run(streams[0], streams[1], server.create_initialization_options())
-    
-    app = Starlette(routes=[Route("/messages", endpoint=handle_sse)])
-    uvicorn.run(app, host="0.0.0.0", port=port)
-    else:
-        # Local Claude Desktop
-        from mcp.server.stdio import stdio_server
-        
-        print("Starting stdio server...")
-        async with stdio_server() as (read_stream, write_stream):
-            await server.run(
-                read_stream,
-                write_stream,
-                server.create_initialization_options()
-            )
+    async with stdio_server() as (read_stream, write_stream):
+        await server.run(
+            read_stream,
+            write_stream,
+            server.create_initialization_options()
+        )
 
 
 if __name__ == "__main__":
-    # Check configuration
     if not CANVAS_TOKEN:
         print("WARNING: CANVAS_API_TOKEN not set!")
         print("Get your token from: https://canvas.harvard.edu/profile/settings")
     
     asyncio.run(main())
-
-
