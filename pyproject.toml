@@ -22,3 +22,5 @@ dependencies = [
   "google-auth-oauthlib",
   "msal"
 ]
+[tool.setuptools]
+py-modules = ["server"]
