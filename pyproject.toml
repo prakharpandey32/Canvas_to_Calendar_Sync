@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "canvas_to_calendar_sync"
+version = "0.1.0"
+description = "MCP server: Canvas → Calendar (Google/Outlook), with optional syllabus scan"
+readme = "README.md"
+requires-python = ">=3.11"
+
+dependencies = [
+  "mcp[http]",
+  "requests",
+  "python-dateutil",
+  "python-dotenv",
+  "beautifulsoup4",
+  "pdfminer.six",
+  "dateparser",
+  "google-api-python-client",
+  "google-auth",
+  "google-auth-oauthlib",
+  "msal"
+]
