@@ -1,4 +1,4 @@
-mcp[http]
+mcp>=1.16.0
 requests
 python-dateutil
 python-dotenv
