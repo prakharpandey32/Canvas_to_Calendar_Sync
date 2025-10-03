@@ -1,17 +1,17 @@
 name: canvas-calendar-sync
 version: 1.0.0
 description: Fetch Canvas assignments and exam dates
-author: Your Name
+author: Prakhar Pandey
 homepage: https://github.com/prakharpandey32/Canvas_to_Calendar_Sync
 
-# Specify transport
 transport: stdio
 
-# Server configuration
 server:
   type: docker
-  
-# Configuration schema
+  command: python
+  args:
+    - server.py
+
 config:
   canvas_api_token:
     type: string
@@ -24,7 +24,6 @@ config:
     default: https://canvas.harvard.edu
     required: false
 
-# Tools exposed
 tools:
   - name: check_configuration
     description: Verify Canvas API configuration
@@ -39,9 +38,10 @@ tools:
   - name: sync_to_google
     description: Sync to Google Calendar
 
-# Resources
 resources:
   - uri: canvas://courses
     name: Canvas Courses
+    description: List of active courses
   - uri: canvas://assignments
     name: All Assignments
+    description: All fetched assignments and events
