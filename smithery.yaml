@@ -4,10 +4,3 @@ startCommand:
   command: python
   args:
     - server.py
-  env:
-    MCP_TRANSPORT: "http"
-    PORT: "8000"
-
-http:
-  port: 8000
-  mcpEndpoint: /mcp
