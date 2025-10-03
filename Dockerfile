@@ -13,7 +13,7 @@ COPY server.py .
 EXPOSE 8000
 
 # Set environment for HTTP mode
-ENV MCP_TRANSPORT=http
+ENV MCP_TRANSPORT=sse
 ENV PORT=8000
 
 # Run server
