@@ -11,9 +11,10 @@ import requests
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env
+# Load .env (only if it exists - for local dev)
 ENV_PATH = Path(__file__).with_name(".env")
-load_dotenv(dotenv_path=ENV_PATH, override=True)
+if ENV_PATH.exists():
+    load_dotenv(dotenv_path=ENV_PATH, override=True)
 
 # Canvas config
 CANVAS_BASE = (os.getenv("CANVAS_BASE_URL") or "").rstrip("/")
@@ -742,4 +743,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
