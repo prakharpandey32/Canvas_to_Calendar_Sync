@@ -716,32 +716,36 @@ async def read_resource(uri: str) -> str:
 # Run Server
 # ============================================================================
 
-# --- HTTP/STDIO launcher for Smithery or local use ---
-
-async def run_stdio(server):
-    from mcp.server.stdio import stdio_server
-    async with stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            server.create_initialization_options()
-        )
-
-async def run_http(server):
-    from mcp.server.streamable_http import StreamableHTTPServer  # CORRECT
-    port = int(os.getenv("PORT", "8000"))
-    http_server = StreamableHTTPServer(server)  # CORRECT
-    await http_server.run(host="0.0.0.0", port=port)  # CORRECT
-
 async def main():
-    # Use HTTP on Smithery, STDIO locally (default)
+    """Run the server with appropriate transport"""
+    # Detect environment
     mode = os.getenv("MCP_TRANSPORT", "stdio").lower()
+    
     if mode == "http":
-        await run_http(server)
+        # Smithery/Cloud deployment
+        from mcp.server.streamable_http import StreamableHTTPServer
+        port = int(os.getenv("PORT", "8000"))
+        
+        print(f"Starting HTTP server on port {port}...")
+        http_server = StreamableHTTPServer(server)
+        await http_server.run(host="0.0.0.0", port=port)
     else:
-        await run_stdio(server)
+        # Local Claude Desktop
+        from mcp.server.stdio import stdio_server
+        
+        print("Starting stdio server...")
+        async with stdio_server() as (read_stream, write_stream):
+            await server.run(
+                read_stream,
+                write_stream,
+                server.create_initialization_options()
+            )
+
 
 if __name__ == "__main__":
+    # Check configuration
+    if not CANVAS_TOKEN:
+        print("WARNING: CANVAS_API_TOKEN not set!")
+        print("Get your token from: https://canvas.harvard.edu/profile/settings")
+    
     asyncio.run(main())
-
-
