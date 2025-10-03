@@ -4,10 +4,11 @@ description: Fetch Canvas assignments and exam dates
 author: Prakhar Pandey
 homepage: https://github.com/prakharpandey32/Canvas_to_Calendar_Sync
 
+runtime: python
+
 transport: stdio
 
-server:
-  type: docker
+startCommand:
   command: python
   args:
     - server.py
