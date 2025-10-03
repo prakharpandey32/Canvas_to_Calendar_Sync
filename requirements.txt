@@ -1,4 +1,12 @@
-mcp
+mcp[http]
 requests
-msal
 python-dateutil
+python-dotenv
+beautifulsoup4
+pdfminer.six
+google-auth
+google-auth-oauthlib
+google-api-python-client
+msal
+
+
