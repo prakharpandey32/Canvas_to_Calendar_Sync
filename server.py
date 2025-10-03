@@ -715,10 +715,10 @@ async def read_resource(uri: str) -> str:
 # Run Server
 # ============================================================================
 
-async def main():
-    """Run the MCP server"""
+# --- HTTP/STDIO launcher for Smithery or local use ---
+
+async def run_stdio(server):
     from mcp.server.stdio import stdio_server
-    
     async with stdio_server() as (read_stream, write_stream):
         await server.run(
             read_stream,
@@ -726,12 +726,23 @@ async def main():
             server.create_initialization_options()
         )
 
+async def run_http(server):
+    from mcp.server.http import http_server
+    port = int(os.getenv("PORT", "8000"))
+    async with http_server(port=port) as (read_stream, write_stream):
+        await server.run(
+            read_stream,
+            write_stream,
+            server.create_initialization_options()
+        )
+
+async def main():
+    # Use HTTP on Smithery, STDIO locally (default)
+    mode = os.getenv("MCP_TRANSPORT", "stdio").lower()
+    if mode == "http":
+        await run_http(server)
+    else:
+        await run_stdio(server)
 
 if __name__ == "__main__":
-    # Check if tokens are set
-    if not CANVAS_TOKEN:
-        print("WARNING: CANVAS_API_TOKEN not set!")
-        print(f"Get your token from: {(CANVAS_BASE or 'https://your.canvas.domain.here')}/profile/settings")
-        print("Set it with: export CANVAS_API_TOKEN='your_token_here'")
-    
     asyncio.run(main())
