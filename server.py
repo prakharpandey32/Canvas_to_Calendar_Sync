@@ -722,13 +722,23 @@ async def main():
     mode = os.getenv("MCP_TRANSPORT", "stdio").lower()
     
     if mode == "http":
-        # Smithery/Cloud deployment
-        from mcp.server.streamable_http import StreamableHTTPServer
-        port = int(os.getenv("PORT", "8000"))
-        
-        print(f"Starting HTTP server on port {port}...")
-        http_server = StreamableHTTPServer(server)
-        await http_server.run(host="0.0.0.0", port=port)
+    # Smithery/Cloud deployment
+    from mcp.server.sse import SseServerTransport
+    from starlette.applications import Starlette
+    from starlette.routing import Route
+    import uvicorn
+    
+    port = int(os.getenv("PORT", "8000"))
+    print(f"Starting SSE server on port {port}...")
+    
+    sse = SseServerTransport("/messages")
+    
+    async def handle_sse(request):
+        async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
+            await server.run(streams[0], streams[1], server.create_initialization_options())
+    
+    app = Starlette(routes=[Route("/messages", endpoint=handle_sse)])
+    uvicorn.run(app, host="0.0.0.0", port=port)
     else:
         # Local Claude Desktop
         from mcp.server.stdio import stdio_server
@@ -749,3 +759,4 @@ if __name__ == "__main__":
         print("Get your token from: https://canvas.harvard.edu/profile/settings")
     
     asyncio.run(main())
+
