@@ -727,14 +727,10 @@ async def run_stdio(server):
         )
 
 async def run_http(server):
-    from mcp.server.http import http_server
+    from mcp.server.streamable_http import StreamableHTTPServer  # CORRECT
     port = int(os.getenv("PORT", "8000"))
-    async with http_server(port=port) as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            server.create_initialization_options()
-        )
+    http_server = StreamableHTTPServer(server)  # CORRECT
+    await http_server.run(host="0.0.0.0", port=port)  # CORRECT
 
 async def main():
     # Use HTTP on Smithery, STDIO locally (default)
@@ -746,3 +742,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
