@@ -721,7 +721,7 @@ async def main():
     # Detect environment
     mode = os.getenv("MCP_TRANSPORT", "stdio").lower()
     
-    if mode == "http":
+    if mode == "sse":
     # Smithery/Cloud deployment
     from mcp.server.sse import SseServerTransport
     from starlette.applications import Starlette
@@ -759,4 +759,5 @@ if __name__ == "__main__":
         print("Get your token from: https://canvas.harvard.edu/profile/settings")
     
     asyncio.run(main())
+
 
